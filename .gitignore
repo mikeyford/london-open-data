@@ -35,3 +35,6 @@ vignettes/*.pdf
 
 #data files
 data/stats-boundaries-london/*
+
+#Mac files
+.DS_Store
