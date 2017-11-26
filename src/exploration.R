@@ -59,3 +59,9 @@ spplot(boroughs[-33,], "mental_health_spend_per_pop", sub = "Mental health spend
 
 #look into how where over 65 ASC spending does not increase with proportion of over 65s
 
+#produce correlation headmap of 20 interesting values
+
+
+pol <- read.csv("data/ward_pollution.csv")
+health <- read.csv("data/wards_health.csv")
+
