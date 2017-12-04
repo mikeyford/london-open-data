@@ -17,7 +17,7 @@ wards <- merge(wards, wb, by.x = "GSS_CODE", by.y = "New_ward_code")
 
 wards$pop_density <- wards$population/wards$HECTARES
 
-spplot(wards, "bad_health_rate", sub = "Rate of bad health (self-reported", col = "transparent")
+spplot(wards, "bad_health_rate", sub = "Rate of bad health (self-reported)", col = "transparent")
 spplot(wards, "Aged_Over65", sub = "Over 65 rate", col = "transparent")
 
 names(wards@data) <- abbreviate(names(wards@data), minlength=8) 
