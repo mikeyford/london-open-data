@@ -2,11 +2,16 @@ library(dplyr)
 library(ggplot2)
 library(rgdal)
 library(rgeos)
+library(ggmap)
+require(maptools)
 
 hp <- read.csv("data/london-house-prices-pp-2016.csv")
+hp$Postcode <- gsub(' ','',hp$Postcode)
 pc <- read.csv("data/london-postcode-bng-lookup.csv")
+pc$Postcode <- gsub(' ','',pc$Postcode)
 
-df <- merge(x = pc, y = hp, by = "Postcode", all.y = TRUE)
+df <- merge(hp, pc, by = "Postcode")
+df$Northings <- df$Nothings
 
 dropList <- c("X.x","X.y")
 df <- df[ , !(names(df) %in% dropList)]
@@ -73,5 +78,82 @@ ggplot(data=monthly, aes(Month, Transactions, group = 1)) +
         geom_point(aes(y = Transactions_Other))
 
 
+#### plotting March sales
 
+#transform to WGS84
+uk_bng <- df[,c('Postcode','Eastings','Northings')]
+
+bng <- "+init=epsg:27700"
+wgs84 <- "+init=epsg:4326"
+
+coordinates(uk_bng) <- c("Eastings", "Northings")
+proj4string(uk_bng) <- CRS(bng)
+uk_wgs84 = spTransform(uk_bng, CRS(wgs84))
+
+converted_coordinates <- as.data.frame(uk_wgs84)
+names(converted_coordinates) <- c("pc2","longitude", "latitude")
+
+df <- cbind(df, converted_coordinates)
+
+dfKC <- df %>%
+  filter(District == "KENSINGTON AND CHELSEA")
+
+# getting the map
+mapgilbert <- get_map(location = c(lon = mean(dfKC$longitude), lat = mean(dfKC$latitude))-0.005, zoom = 14,
+                      maptype = "hybrid", scale = 2)
+
+
+df03 <- df %>%
+  filter(Month == "03")
+
+#plot montht of march
+#plot random sample not march, the same size as month of march
+
+# plotting the map with some points on it
+ggmap(mapgilbert) +
+  geom_point(data = df03, aes(x = longitude, y = latitude, fill = "red"), size = 2, shape = 21) +
+  guides(fill=FALSE, alpha=FALSE, size=FALSE)
+
+
+df00 <- df %>%
+  filter(Month != "03")
+
+ggmap(mapgilbert) +
+  geom_point(data = sample_n(df00, 9022), aes(x = longitude, y = latitude, fill = "red"), size = 2, shape = 21) +
+  guides(fill=FALSE, alpha=FALSE, size=FALSE)
+
+
+
+df03_KC <- df %>%
+  filter(Month == "03",District == "KENSINGTON AND CHELSEA")
+
+df00_KC <- df %>%
+  filter(Month != 03, District == "KENSINGTON AND CHELSEA")
+
+insideKCTypical = nrow(df00_KC)/11
+insideKC03 = nrow(df03_KC)
+insideKCIncrease = insideKC03/insideKCTypical
+sum(df03_KC$Price)
+
+df03_notKC <- df %>%
+  filter(Month == "03", District != "KENSINGTON AND CHELSEA")
+
+df00_notKC <- df %>%
+  filter(Month != 03, District != "KENSINGTON AND CHELSEA")
+
+outsideKCTypical = nrow(df00_notKC)/11
+outsideKC03 = nrow(df03_notKC)
+outsideKCInrease = outsideKC03/outsideKCTypical
+
+
+df03_BD <- df %>%
+  filter(Month == "03",District == "BARKING AND DAGENHAM")
+
+df00_BD <- df %>%
+  filter(Month != 03, District == "BARKING AND DAGENHAM")
+
+insideBDTypical = nrow(df00_BD)/11
+insideBD03 = nrow(df03_BD)
+insideBDInrease = insideBD03/insideBDTypical
+sum(df03_BD$Price)
 
